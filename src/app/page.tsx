@@ -94,10 +94,10 @@ const Home = () => {
       >
         <div className="w-full max-w-2xl p-4 pt-7 text-center inline-flex flex-col items-center basis-auto shrink-0">
           <h1 className="text-5xl tracking-normal text-black pb-2">
-            Video calls and meetings for everyone
+            Online AI DWI Classes for Everyone in Texas
           </h1>
           <p className="text-1x text-gray pb-8">
-            Connect, collaborate, and celebrate from anywhere with Moogle Meet
+            Take your court-ordered DWI classes from anywhere on Rodney and Jada's platform
           </p>
         </div>
         <div className="w-full max-w-xl flex justify-center">
