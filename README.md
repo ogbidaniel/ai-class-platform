@@ -1,14 +1,7 @@
-# The Google Meet Clone
+# AI Class Platform
 
-A video conferencing application that replicates the core functionalities of Google Meet. Built using Next.js, TypeScript, and Stream's Video and Chat SDKs, this application allows users to conduct virtual meetings with real-time video, audio, and messaging capabilities.
-
-<p align="center">
-    <a href="https://tropicolx.hashnode.dev/building-a-google-meet-clone-with-nextjs-and-tailwindcss-part-one" style="display: block;" align="center">
-        <img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1727703697955/ce9ba7d8-e626-4bdb-8fdf-a98d9061cf34.png" alt="Building a Google Meet Clone with Next.js and TailwindCSS" width="60%" />
-    </a>
-</p>
-<p align="center"><a href="https://tropicolx.hashnode.dev/building-a-google-meet-clone-with-nextjs-and-tailwindcss-part-one" align="center">Click to read!</a></p>
-    
+AI video conferencing application that replicates the core functionalities of Google Meet. Built using Next.js, TypeScript, and Stream's Video and Chat SDKs, this application allows users to conduct virtual meetings with real-time video, audio, and messaging capabilities.
+  
 
 ## Table of Contents
 
