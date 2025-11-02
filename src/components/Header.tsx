@@ -26,8 +26,8 @@ const Header = ({ navItems = true }: HeaderProps) => {
         <a href="/#" className="flex items-center gap-2 w-full">
           <Videocam width={40} height={40} color="var(--primary)" />
           <div className="font-product-sans text-2xl leading-6 text-meet-gray select-none">
-            <span className="font-medium">Moogle </span>
-            <span>Meet</span>
+            <span className="font-medium">AI Class </span>
+            <span>Platform</span>
           </div>
         </a>
       </div>
@@ -47,7 +47,7 @@ const Header = ({ navItems = true }: HeaderProps) => {
         <div className="ml-2 flex items-center justify-end w-[6.5625rem] lg:ml-5">
           {navItems && (
             <div className="hidden sm:block">
-              <IconButton title="Moogle apps" icon={<Apps />} />
+              <IconButton title="AI apps" icon={<Apps />} />
             </div>
           )}
           <div

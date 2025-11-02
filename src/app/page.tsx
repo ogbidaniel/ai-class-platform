@@ -163,7 +163,7 @@ const Home = () => {
               <a className="text-meet-blue hover:underline" href="#">
                 Learn more
               </a>{' '}
-              about Moogle Meet
+              about the AI Class Platform
             </span>
           </div>
         </footer>

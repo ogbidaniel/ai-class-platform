@@ -8,9 +8,9 @@ import 'stream-chat-react/dist/css/v2/index.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Moogle Meet',
+  title: 'AI Class Platform',
   description:
-    'Real-time meetings by Moogle. Using your browser, share your video, desktop, and presentations with teammates and customers.',
+    'Real-time AI Classes. Using your browser, take court ordered classes from anywhere.',
 };
 
 export default function RootLayout({
