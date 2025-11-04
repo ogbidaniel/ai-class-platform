@@ -1,7 +1,7 @@
 'use client';
 import { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SignInButton, useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { customAlphabet } from 'nanoid';
 import {
   ErrorFromResponse,
@@ -33,11 +33,14 @@ const GUEST_USER: User = { id: 'guest', type: 'guest' };
 
 const Home = () => {
   const { setNewMeeting } = useContext(AppContext);
-  const { isLoaded, isSignedIn } = useUser();
+  const { data: session, status } = useSession();
   const [code, setCode] = useState('');
   const [checkingCode, setCheckingCode] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+
+  const isLoaded = status !== 'loading';
+  const isSignedIn = !!session;
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -97,7 +100,7 @@ const Home = () => {
             Online AI DWI Classes for Everyone in Texas
           </h1>
           <p className="text-1x text-gray pb-8">
-            Take your court-ordered DWI classes from anywhere on Rodney and Jada's platform
+            Take your court-ordered DWI classes from anywhere on Rodney and Jada&apos;s platform
           </p>
         </div>
         <div className="w-full max-w-xl flex justify-center">
@@ -108,9 +111,9 @@ const Home = () => {
               </ButtonWithIcon>
             )}
             {!isSignedIn && (
-              <SignInButton>
-                <Button size="md">Sign in</Button>
-              </SignInButton>
+              <Button size="md" onClick={() => router.push('/admin/login')}>
+                Admin Sign In
+              </Button>
             )}
             <div className="flex items-center gap-2 sm:ml-4">
               <TextField

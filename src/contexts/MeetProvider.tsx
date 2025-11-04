@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { nanoid } from 'nanoid';
 import {
   Call,
@@ -35,17 +35,23 @@ export const tokenProvider = async (userId: string = '') => {
 };
 
 const MeetProvider = ({ meetingId, children }: MeetProviderProps) => {
-  const { user: clerkUser, isSignedIn, isLoaded } = useUser();
+  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
   const [chatClient, setChatClient] = useState<StreamChat>();
   const [videoClient, setVideoClient] = useState<StreamVideoClient>();
   const [call, setCall] = useState<Call>();
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (status === 'loading') return;
+
+    const isSignedIn = status === 'authenticated';
+    // Sanitize email to create valid Stream user ID (replace @ and . with allowed characters)
+    const sanitizedUserId = session?.user?.email
+      ? session.user.email.replace(/@/g, '_at_').replace(/\./g, '_')
+      : GUEST_ID;
 
     const customProvider = async () => {
-      const token = await tokenProvider(clerkUser?.id);
+      const token = await tokenProvider(sanitizedUserId);
       return token;
     };
 
@@ -56,13 +62,15 @@ const MeetProvider = ({ meetingId, children }: MeetProviderProps) => {
     };
 
     let user: User | ChatUser;
-    if (isSignedIn) {
+    if (isSignedIn && session?.user) {
+      // Use sanitized email as ID to comply with Stream's requirements
+      const userName = session.user.name || session.user.email?.split('@')[0] || 'Admin';
       user = {
-        id: clerkUser.id,
-        name: clerkUser.fullName!,
-        image: clerkUser.hasImage ? clerkUser.imageUrl : undefined,
+        id: sanitizedUserId,
+        name: userName,
+        image: session.user.image || undefined,
         custom: {
-          username: clerkUser?.username,
+          email: session.user.email,
         },
       };
     } else {
@@ -89,7 +97,7 @@ const MeetProvider = ({ meetingId, children }: MeetProviderProps) => {
       _videoClient.disconnectUser();
       _chatClient.disconnectUser();
     };
-  }, [clerkUser, isLoaded, isSignedIn, loading, meetingId]);
+  }, [session, status, meetingId]);
 
   if (loading) return <LoadingOverlay />;
 

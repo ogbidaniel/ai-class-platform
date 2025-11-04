@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Admin accounts for Jada and you
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hashed password
+  name      String
+  role      String   @default("admin") // For future: "super_admin", "admin", "instructor"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Student accounts
+model Student {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  firstName       String
+  lastName        String
+  phone           String?
+  
+  // MFA for email verification
+  mfaCode         String?
+  mfaCodeExpiry   DateTime?
+  mfaVerified     Boolean  @default(false)
+  
+  // Status tracking
+  isActive        Boolean  @default(true)
+  registeredAt    DateTime @default(now())
+  lastLoginAt     DateTime?
+  
+  // Future: payment, forms, compliance
+  // We'll add these columns later when requirements are clear
+  notes           String?  // Admin notes about student
+  
+  // Relations
+  enrollments     Enrollment[]
+  attendances     Attendance[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Meetings/Classes created by admins
+model Meeting {
+  id          String   @id // The meeting code (e.g., abc-defg-hij)
+  title       String
+  description String?
+  
+  // Meeting metadata
+  scheduledAt DateTime? // When class is scheduled
+  startedAt   DateTime? // When admin actually started it
+  endedAt     DateTime? // When meeting ended
+  duration    Int?      // Duration in minutes
+  
+  // Access control
+  createdBy   String    // Admin email
+  isActive    Boolean   @default(true)
+  maxStudents Int?      // Optional capacity limit
+  
+  // Relations
+  enrollments Enrollment[]
+  attendances Attendance[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Which students are enrolled in which meetings
+model Enrollment {
+  id          String   @id @default(cuid())
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  // Access token for this specific meeting (sent via email)
+  accessToken String   @unique // UUID that goes in the email link
+  tokenExpiry DateTime? // Optional: make links expire
+  
+  // Status
+  enrolledAt  DateTime @default(now())
+  hasJoined   Boolean  @default(false) // Track if they actually joined
+  
+  @@unique([studentId, meetingId]) // Student can only enroll once per meeting
+}
+
+// Track actual attendance during meetings
+model Attendance {
+  id          String   @id @default(cuid())
+  
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  // Attendance tracking
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+  duration    Int?     // Minutes attended (calculated when they leave)
+  
+  // Future: Screenshot verification, camera checks
+  verificationPhoto String? // URL to S3 screenshot
+  cameraEnabled     Boolean @default(false)
+  micEnabled        Boolean @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([studentId, meetingId]) // One attendance record per student per meeting
+}

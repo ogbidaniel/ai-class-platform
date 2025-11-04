@@ -6,17 +6,23 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^5.3.0",
     "@gsap/react": "^2.1.1",
+    "@prisma/client": "^6.18.0",
     "@stream-io/node-sdk": "^0.4.0",
     "@stream-io/video-react-sdk": "^1.2.20",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "gsap": "^3.12.5",
     "nanoid": "^5.0.7",
     "next": "^14.2.0",
+    "next-auth": "^4.24.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "stream-chat": "^8.37.0",
@@ -24,6 +30,7 @@
     "svix": "^1.32.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -33,6 +40,7 @@
     "eslint-config-next": "^15.0.0-rc.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

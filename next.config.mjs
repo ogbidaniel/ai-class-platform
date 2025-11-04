@@ -1,5 +1,3 @@
-import { hostname } from 'os';
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -12,9 +10,6 @@ const nextConfig = {
       },
       {
         hostname: 'gstatic.com',
-      },
-      {
-        hostname: 'img.clerk.com',
       },
     ],
   },

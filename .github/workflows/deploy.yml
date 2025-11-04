@@ -20,8 +20,10 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          cd ~/ai-class-platform
+          cd ~/google-meet-clone
           git pull origin main
           yarn install
+          yarn prisma generate
+          yarn prisma db push
           yarn build
-          pm2 restart ai-class-platform
+          pm2 restart google-meet-clone || pm2 start yarn --name "google-meet-clone" -- start

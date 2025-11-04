@@ -41,7 +41,7 @@ const GridLayout = () => {
     return groups;
   }, [participants]);
 
-  const selectedGroup = participantGroups[page];
+  const selectedGroup = participantGroups[page] || [];
 
   useEffect(() => {
     if (!call) return;

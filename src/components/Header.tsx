@@ -1,4 +1,6 @@
-import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
+'use client';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 
 import Apps from './icons/Apps';
@@ -16,9 +18,23 @@ interface HeaderProps {
 }
 
 const Header = ({ navItems = true }: HeaderProps) => {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { data: session, status } = useSession();
   const { currentDateTime } = useTime();
-  const email = user?.primaryEmailAddress?.emailAddress;
+  const router = useRouter();
+  
+  const isLoaded = status !== 'loading';
+  const isSignedIn = !!session;
+  const user = session?.user;
+  const email = user?.email;
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.push('/');
+  };
+
+  const handleSignIn = () => {
+    router.push('/admin/login');
+  };
 
   return (
     <header className="w-full px-4 pt-4 flex items-center justify-between bg-white">
@@ -61,18 +77,20 @@ const Header = ({ navItems = true }: HeaderProps) => {
                 {!navItems && (
                   <div className="hidden sm:block mr-3 font-roboto leading-4 text-right text-meet-black">
                     <div className="text-sm leading-4">{email}</div>
-                    <div className="text-sm hover:text-meet-blue cursor-pointer">
-                      Switch account
+                    <div 
+                      className="text-sm hover:text-meet-blue cursor-pointer"
+                      onClick={handleSignOut}
+                    >
+                      Sign out
                     </div>
                   </div>
                 )}
                 <div className="relative h-9">
-                  <UserButton />
                   <div className="absolute left-0 top-0 flex items-center justify-center pointer-events-none">
                     <Avatar
                       participant={{
-                        name: user?.fullName,
-                        image: user.hasImage ? user.imageUrl : undefined,
+                        name: user?.name || user?.email,
+                        image: undefined,
                       }}
                       width={36}
                     />
@@ -80,9 +98,9 @@ const Header = ({ navItems = true }: HeaderProps) => {
                 </div>
               </>
             ) : (
-              <SignInButton>
-                <PlainButton size="sm">Sign In</PlainButton>
-              </SignInButton>
+              <PlainButton size="sm" onClick={handleSignIn}>
+                Sign In
+              </PlainButton>
             )}
           </div>
         </div>

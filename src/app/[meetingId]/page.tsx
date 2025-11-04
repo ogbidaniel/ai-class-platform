@@ -11,7 +11,7 @@ import {
   useConnectedUser,
 } from '@stream-io/video-react-sdk';
 import { useChatContext } from 'stream-chat-react';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 
 import { AppContext, MEETING_ID_REGEX } from '@/contexts/AppProvider';
 import { GUEST_ID, tokenProvider } from '@/contexts/MeetProvider';
@@ -33,7 +33,8 @@ const Lobby = ({ params }: LobbyProps) => {
   const validMeetingId = MEETING_ID_REGEX.test(meetingId);
   const { newMeeting, setNewMeeting } = useContext(AppContext);
   const { client: chatClient } = useChatContext();
-  const { isSignedIn } = useUser();
+  const { data: session, status } = useSession();
+  const isSignedIn = status === 'authenticated';
   const router = useRouter();
   const connectedUser = useConnectedUser();
   const call = useCall();
