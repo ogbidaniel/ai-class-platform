@@ -20,10 +20,24 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          cd ~/google-meet-clone
+          # 1. Navigate to the correct project directory
+          cd ~/ai-class-platform
+          
+          # 2. Pull the latest code from the main branch
           git pull origin main
+          
+          # 3. Install/update dependencies
           yarn install
+          
+          # 4. Generate the Prisma client
           yarn prisma generate
+          
+          # 5. Push any database schema changes
           yarn prisma db push
+          
+          # 6. Build the Next.js application
           yarn build
-          pm2 restart google-meet-clone || pm2 start yarn --name "google-meet-clone" -- start
+          
+          # 7. Restart the pm2 process
+          # VITAL: Replace 'ai-class-platform' with the name you found using 'pm2 list'
+          pm2 restart ai-class-platform || pm2 start yarn --name "ai-class-platform" -- start
