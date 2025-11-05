@@ -92,10 +92,6 @@ export default function AdminLogin() {
             </button>
           </div>
         </form>
-        <div className="text-center text-sm text-gray-600">
-          <p>Test credentials:</p>
-          <p className="font-mono text-xs mt-1">maverickogbuigwe@gmail.com / Admin123!</p>
-        </div>
       </div>
     </div>
   );
