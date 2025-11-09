@@ -20,7 +20,6 @@ import CallParticipants from '@/components/CallParticipants';
 import Header from '@/components/Header';
 import MeetingPreview from '@/components/MeetingPreview';
 import Spinner from '@/components/Spinner';
-import TextField from '@/components/TextField';
 
 interface LobbyProps {
   params: {
@@ -35,19 +34,60 @@ const Lobby = ({ params }: LobbyProps) => {
   const { client: chatClient } = useChatContext();
   const { data: session, status } = useSession();
   const isSignedIn = status === 'authenticated';
+  const isAdmin = isSignedIn; // All signed-in users are admins
   const router = useRouter();
   const connectedUser = useConnectedUser();
   const call = useCall();
-  const { useCallCallingState } = useCallStateHooks();
+  const { useCallCallingState, useCameraState } = useCallStateHooks();
   const callingState = useCallCallingState();
-  const [guestName, setGuestName] = useState('');
+  const { camera, hasBrowserPermission: hasCameraPermission } = useCameraState();
   const [errorFetchingMeeting, setErrorFetchingMeeting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
-  const [participants, setParticipants] = useState<CallParticipantResponse[]>(
-    []
-  );
-  const isGuest = !isSignedIn;
+  const [participants, setParticipants] = useState<CallParticipantResponse[]>([]);
+  const [studentInfo, setStudentInfo] = useState<any>(null);
+  const [attendanceId, setAttendanceId] = useState<string | null>(null);
+
+  // Check for student info in sessionStorage
+  useEffect(() => {
+    if (!isAdmin) {
+      const storedInfo = sessionStorage.getItem('studentInfo');
+      if (!storedInfo) {
+        // Redirect to student info page if not an admin and no student info
+        router.push(`/${meetingId}/student-info`);
+        return;
+      }
+      setStudentInfo(JSON.parse(storedInfo));
+    }
+  }, [isAdmin, meetingId, router]);
+
+  // Track attendance when student enters lobby
+  useEffect(() => {
+    const trackAttendance = async () => {
+      if (studentInfo && !attendanceId) {
+        try {
+          const response = await fetch('/api/attendance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              studentId: studentInfo.studentId,
+              meetingId,
+            }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            setAttendanceId(data.attendanceId);
+            console.log('Attendance tracked:', data.isRejoin ? 'Rejoined' : 'First join');
+          }
+        } catch (error) {
+          console.error('Failed to track attendance:', error);
+        }
+      }
+    };
+
+    trackAttendance();
+  }, [studentInfo, meetingId, attendanceId]);
 
   useEffect(() => {
     const leavePreviousCall = async () => {
@@ -63,6 +103,14 @@ const Lobby = ({ params }: LobbyProps) => {
       } catch (e) {
         const err = e as ErrorFromResponse<GetCallResponse>;
         console.error(err.message);
+        
+        // If call doesn't exist in Stream (404), create it
+        if (err.status === 404 && isAdmin) {
+          console.log('Call not found in Stream, creating it...');
+          await createCall();
+          return;
+        }
+        
         setErrorFetchingMeeting(true);
       }
       setLoading(false);
@@ -103,8 +151,10 @@ const Lobby = ({ params }: LobbyProps) => {
 
   const heading = useMemo(() => {
     if (loading) return 'Getting ready...';
-    return isGuest ? "What's your name?" : 'Ready to join?';
-  }, [loading, isGuest]);
+    if (isAdmin) return 'Ready to join?';
+    if (!hasCameraPermission) return 'Camera access required';
+    return 'Ready to join your class?';
+  }, [loading, isAdmin, hasCameraPermission]);
 
   const participantsUI = useMemo(() => {
     switch (true) {
@@ -121,15 +171,18 @@ const Lobby = ({ params }: LobbyProps) => {
     }
   }, [loading, joining, participants]);
 
-  const updateGuestName = async () => {
+  const updateStudentName = async () => {
+    if (!studentInfo) return;
+    
     try {
+      const fullName = `${studentInfo.firstName} ${studentInfo.lastName}`;
       await fetch('/api/user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user: { id: connectedUser?.id, name: guestName },
+          user: { id: connectedUser?.id, name: fullName },
         }),
       });
       await chatClient.disconnectUser();
@@ -137,7 +190,7 @@ const Lobby = ({ params }: LobbyProps) => {
         {
           id: GUEST_ID,
           type: 'guest',
-          name: guestName,
+          name: fullName,
         },
         tokenProvider
       );
@@ -148,14 +201,37 @@ const Lobby = ({ params }: LobbyProps) => {
 
   const joinCall = async () => {
     setJoining(true);
-    if (isGuest) {
-      await updateGuestName();
+    
+    if (!isAdmin) {
+      await updateStudentName();
     }
+    
     if (callingState !== CallingState.JOINED) {
       await call?.join();
     }
+    
     router.push(`/${meetingId}/meeting`);
   };
+
+  // Determine if join button should be disabled
+  const isJoinDisabled = useMemo(() => {
+    if (loading || joining) return true;
+    if (isAdmin) return false;
+    // Students must have camera enabled
+    return !hasCameraPermission || !camera;
+  }, [loading, joining, isAdmin, hasCameraPermission, camera]);
+
+  const cameraWarningMessage = useMemo(() => {
+    if (isAdmin || hasCameraPermission) return null;
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg max-w-md text-center">
+        <p className="font-semibold">Camera Required</p>
+        <p className="text-sm mt-1">
+          Please enable your camera to join the class. You can troubleshoot your camera settings below.
+        </p>
+      </div>
+    );
+  }, [isAdmin, hasCameraPermission]);
 
   if (!validMeetingId)
     return (
@@ -185,15 +261,15 @@ const Lobby = ({ params }: LobbyProps) => {
           <h2 className="text-black text-3xl text-center truncate">
             {heading}
           </h2>
-          {isGuest && !loading && (
-            <TextField
-              label="Name"
-              name="name"
-              placeholder="Your name"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-            />
+          {!isAdmin && studentInfo && (
+            <div className="text-center">
+              <p className="text-sm text-gray">Welcome,</p>
+              <p className="font-semibold text-lg text-black">
+                {studentInfo.firstName} {studentInfo.lastName}
+              </p>
+            </div>
           )}
+          {cameraWarningMessage}
           <span className="text-meet-black font-medium text-center text-sm cursor-default">
             {participantsUI}
           </span>
@@ -202,10 +278,10 @@ const Lobby = ({ params }: LobbyProps) => {
               <Button
                 className="w-60 text-sm"
                 onClick={joinCall}
-                disabled={isGuest && !guestName}
+                disabled={isJoinDisabled}
                 rounding="lg"
               >
-                Join now
+                {isJoinDisabled && !isAdmin ? 'Enable camera to join' : 'Join now'}
               </Button>
             )}
             {(joining || loading) && (

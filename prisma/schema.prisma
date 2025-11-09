@@ -68,6 +68,7 @@ model Meeting {
   // Relations
   enrollments Enrollment[]
   attendances Attendance[]
+  breakoutRooms BreakoutRoom[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -117,4 +118,54 @@ model Attendance {
   createdAt   DateTime @default(now())
   
   @@unique([studentId, meetingId]) // One attendance record per student per meeting
+}
+
+// Breakout room configuration
+model BreakoutRoom {
+  id          String   @id @default(cuid())
+  
+  // Parent meeting
+  meetingId   String
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  // Room details
+  roomNumber  Int      // 1, 2, 3, etc.
+  name        String?  // Optional: "Group A", "Team Red", etc.
+  
+  // Stream call ID for this breakout room
+  streamCallId String  // e.g., "abc-defg-hij-br1"
+  
+  // Lifecycle
+  createdAt   DateTime @default(now())
+  createdBy   String   // Admin email
+  openedAt    DateTime?
+  closedAt    DateTime?
+  isActive    Boolean  @default(false)
+  
+  // Configuration
+  duration    Int?     // Auto-close after N minutes
+  
+  // Relations
+  assignments BreakoutAssignment[]
+  
+  @@unique([meetingId, roomNumber])
+}
+
+// Student-to-room assignments
+model BreakoutAssignment {
+  id            String   @id @default(cuid())
+  
+  roomId        String
+  room          BreakoutRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  // Stream user ID (could be admin, student, or guest)
+  userId        String
+  userName      String?  // For display
+  
+  joinedAt      DateTime?
+  leftAt        DateTime?
+  
+  createdAt     DateTime @default(now())
+  
+  @@unique([roomId, userId])
 }

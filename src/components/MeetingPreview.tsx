@@ -4,6 +4,7 @@ import {
   useCallStateHooks,
   useConnectedUser,
 } from '@stream-io/video-react-sdk';
+import { useSession } from 'next-auth/react';
 
 import {
   AudioInputDeviceSelector,
@@ -23,6 +24,8 @@ import useSoundDetected from '../hooks/useSoundDetected';
 const MeetingPreview = () => {
   const user = useConnectedUser();
   const soundDetected = useSoundDetected();
+  const { data: session, status } = useSession();
+  const isAdmin = status === 'authenticated';
   const [videoPreviewText, setVideoPreviewText] = useState('');
   const [displaySelectors, setDisplaySelectors] = useState(false);
   const [devicesEnabled, setDevicesEnabled] = useState(false);
@@ -46,6 +49,8 @@ const MeetingPreview = () => {
       } catch (error) {
         console.error(error);
       }
+      
+      // Enable microphone for all, but will mute students after
       try {
         await microphone.enable();
       } catch (error) {
@@ -56,6 +61,21 @@ const MeetingPreview = () => {
 
     enableMicAndCam();
   }, [camera, microphone]);
+
+  // Mute students by default
+  useEffect(() => {
+    const muteStudentMic = async () => {
+      if (!isAdmin && devicesEnabled && !isMicrophoneMute) {
+        try {
+          await microphone.disable();
+        } catch (error) {
+          console.error('Failed to mute student microphone:', error);
+        }
+      }
+    };
+
+    muteStudentMic();
+  }, [isAdmin, devicesEnabled, isMicrophoneMute, microphone]);
 
   useEffect(() => {
     if (hasMicrophonePermission === undefined) return;
@@ -68,6 +88,11 @@ const MeetingPreview = () => {
   }, [microphoneStatus, hasMicrophonePermission]);
 
   const toggleCamera = async () => {
+    // Students cannot turn off camera
+    if (!isAdmin && !isCameraMute) {
+      return;
+    }
+
     try {
       setVideoPreviewText((prev) =>
         prev === '' || prev === 'Camera is off'
@@ -84,6 +109,11 @@ const MeetingPreview = () => {
   };
 
   const toggleMicrophone = async () => {
+    // Students cannot control their microphone in lobby
+    if (!isAdmin) {
+      return;
+    }
+
     try {
       await microphone.toggle();
     } catch (error) {
@@ -110,21 +140,33 @@ const MeetingPreview = () => {
             <IconButton
               icon={isMicrophoneMute ? <MicOff /> : <Mic />}
               title={
-                isMicrophoneMute ? 'Turn on microphone' : 'Turn off microphone'
+                !isAdmin 
+                  ? 'Microphone will be muted - instructor controls' 
+                  : isMicrophoneMute 
+                    ? 'Turn on microphone' 
+                    : 'Turn off microphone'
               }
               onClick={toggleMicrophone}
               active={isMicrophoneMute}
               alert={!hasMicrophonePermission}
               variant="secondary"
+              disabled={!isAdmin}
             />
             {/* Camera control */}
             <IconButton
               icon={isCameraMute ? <VideocamOff /> : <Videocam />}
-              title={isCameraMute ? 'Turn on camera' : 'Turn off camera'}
+              title={
+                !isAdmin && !isCameraMute 
+                  ? 'Camera must remain on for class' 
+                  : isCameraMute 
+                    ? 'Turn on camera' 
+                    : 'Turn off camera'
+              }
               onClick={toggleCamera}
               active={isCameraMute}
               alert={!hasCameraPermission}
               variant="secondary"
+              disabled={!isAdmin && !isCameraMute}
             />
           </div>
         )}

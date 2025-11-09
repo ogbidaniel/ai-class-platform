@@ -14,6 +14,13 @@
     @apply font-google-sans bg-white tracking-looser text-dark-gray;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  html {
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 }
 

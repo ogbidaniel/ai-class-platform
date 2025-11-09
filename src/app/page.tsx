@@ -63,35 +63,22 @@ const Home = () => {
     if (!MEETING_ID_REGEX.test(code)) return;
     setCheckingCode(true);
 
-    const client = new StreamVideoClient({
-      apiKey: API_KEY,
-      user: GUEST_USER,
-    });
-    const call = client.call(CALL_TYPE, code);
-
-    try {
-      const response: GetCallResponse = await call.get();
-      if (response.call) {
-        router.push(`/${code}`);
-        return;
-      }
-    } catch (e: unknown) {
-      let err = e as ErrorFromResponse<GetCallResponse>;
-      console.error(err.message);
-      if (err.status === 404) {
-        setError("Couldn't find the meeting you're trying to join.");
-      }
+    // For admins, just navigate to the meeting
+    if (isSignedIn) {
+      router.push(`/${code}`);
+      return;
     }
 
-    setCheckingCode(false);
+    // For students, verify the meeting exists in database via student-info page
+    router.push(`/${code}/student-info`);
   };
 
   return (
-    <div>
+    <div className="min-h-screen overflow-x-hidden">
       <Header />
       <main
         className={clsx(
-          'flex flex-col items-center justify-center px-6',
+          'flex flex-col items-center justify-center px-6 max-w-full',
           isLoaded ? 'animate-fade-in' : 'opacity-0'
         )}
       >
@@ -100,37 +87,51 @@ const Home = () => {
             Online AI DWI Classes for Everyone in Texas
           </h1>
           <p className="text-1x text-gray pb-8">
-            Take your court-ordered DWI classes from anywhere on Rodney and Jada&apos;s platform
+            Take your court-ordered DWI classes from anywhere on the AI class platform
           </p>
         </div>
-        <div className="w-full max-w-xl flex justify-center">
-          <div className="flex flex-col items-start sm:flex-row gap-6 sm:gap-2 sm:items-center justify-center">
-            {isSignedIn && (
-              <ButtonWithIcon onClick={handleNewMeeting} icon={<Videocall />}>
-                New meeting
-              </ButtonWithIcon>
-            )}
-            {!isSignedIn && (
-              <Button size="md" onClick={() => router.push('/admin/login')}>
-                Admin Sign In
+        <div className="w-full max-w-3xl flex flex-col items-center gap-8 mb-12">
+          {/* Code Entry Section - Made Larger */}
+          <div className="w-full flex flex-col items-center gap-4">
+            <h2 className="text-2xl font-medium text-black">Join a Class</h2>
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-lg">
+              <div className="flex-1 w-full">
+                <TextField
+                  label="Code or link"
+                  name="code"
+                  placeholder="Enter a code or link"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  icon={<KeyboardFilled />}
+                />
+              </div>
+              <Button size="lg" onClick={handleCode} disabled={!code}>
+                Join Class
               </Button>
-            )}
-            <div className="flex items-center gap-2 sm:ml-4">
-              <TextField
-                label="Code or link"
-                name="code"
-                placeholder="Enter a code or link"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                icon={<KeyboardFilled />}
-              />
-              <PlainButton onClick={handleCode} disabled={!code}>
-                Join
-              </PlainButton>
             </div>
           </div>
+
+          {/* Divider */}
+          <div className="w-full max-w-lg mx-auto border-b border-b-border-gray" />
+
+          {/* Admin Section */}
+          {isSignedIn ? (
+            <div className="flex flex-col items-center gap-4">
+              <h2 className="text-2xl font-medium text-black">Start a New Class</h2>
+              <ButtonWithIcon onClick={handleNewMeeting} icon={<Videocall />}>
+                New Class
+              </ButtonWithIcon>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <h2 className="text-xl font-medium text-black">Admin Access</h2>
+              <Button size="lg" onClick={() => router.push('/admin/login')}>
+                Admin Sign In
+              </Button>
+            </div>
+          )}
         </div>
-        <div className="w-full max-w-xl mx-auto border-b border-b-border-gray self-stretch mt-8 mb-20" />
+        <div className="w-full max-w-xl mx-auto border-b border-b-border-gray self-stretch mb-20" />
         <div className="flex flex-col items-center justify-center gap-8">
           <Image
             src="https://www.gstatic.com/meet/user_edu_get_a_link_light_90698cd7b4ca04d3005c962a3756c42d.svg"
@@ -143,8 +144,8 @@ const Home = () => {
               Get a link you can share
             </h2>
             <p className="font-roboto text-sm text-black pb-8 grow">
-              Click <span className="font-bold">New meeting</span> to get a link
-              you can send to people you want to meet with
+              Click <span className="font-bold">New Class</span> to get a link
+              you can send to students for your class
             </p>
           </div>
         </div>

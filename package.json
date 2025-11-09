@@ -1,6 +1,6 @@
 {
-  "name": "google-meet-clone",
-  "version": "0.1.0",
+  "name": "ai-class-platform",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
